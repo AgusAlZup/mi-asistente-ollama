@@ -1,0 +1,1 @@
+El lenguaje Python fue creado por Guido van Rossum y lanzado en 1991. Es famoso por su legibilidad y gran comunidad.

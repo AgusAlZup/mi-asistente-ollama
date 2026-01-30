@@ -1,41 +1,39 @@
 import ollama
-import os
+import subprocess
 
-def leer_archivo(nombre_archivo):
+def buscar_en_youtube(busqueda):
     try:
-        with open(nombre_archivo, 'r', encoding='utf-8') as f:
-            return f.read()
-    except Exception as e:
-        return f"Error al leer el archivo: {e}"
+        # Esto busca el video y nos devuelve el título y la URL
+        comando = f'yt-dlp "ytsearch1:{busqueda}" --get-title --get-id'
+        resultado = subprocess.check_output(comando, shell=True).decode("utf-8").strip().split("\n")
+        titulo = resultado[0]
+        video_id = resultado[1]
+        url = f"https://www.youtube.com/watch?v={video_id}"
+        return f"Encontré: {titulo}\nEnlace: {url}"
+    except:
+        return "No pude encontrar nada en YouTube."
 
 def chat():
-    print("\n🟢 ASISTENTE CON LECTURA DE ARCHIVOS")
-    print("-----------------------------------")
-    print("Escribe 'leer:nombre.txt' para que analice un archivo.")
-    print("Escribe 'salir' para finalizar.\n")
+    print("\n🔴 ASISTENTE MULTIMEDIA")
+    print("Dime: 'busca en youtube musica lo-fi' o similares.")
     
     while True:
-        msg = input("Tú: ")
-        if msg.lower() in ['salir', 'exit']:
-            break
+        msg = input("Tú: ").lower()
+        if msg in ['salir', 'exit']: break
         
-        # Superpoder: Si el mensaje empieza con 'leer:', busca el archivo
-        if msg.startswith("leer:"):
-            archivo = msg.split(":")[1].strip()
-            contenido = leer_archivo(archivo)
-            prompt_final = f"Contexto del archivo {archivo}:\n{contenido}\n\nPregunta: Por favor, resume o analiza este contenido."
-            print(f"📖 Leyendo {archivo}...")
+        if "youtube" in msg:
+            termino = msg.replace("busca en youtube", "").replace("youtube", "").strip()
+            print(f"🔍 Buscando '{termino}' en YouTube...")
+            info_video = buscar_en_youtube(termino)
+            prompt_final = f"El usuario buscó en YouTube y encontré esto: {info_video}. Por favor, responde de forma amable y ofrece el link."
         else:
             prompt_final = msg
 
-        try:
-            response = ollama.generate(model='llama3', prompt=prompt_final, stream=True)
-            print("AI: ", end='', flush=True)
-            for chunk in response:
-                print(chunk['response'], end='', flush=True)
-            print("\n")
-        except Exception as e:
-            print(f"\n❌ Error: {e}")
+        response = ollama.generate(model='llama3', prompt=prompt_final, stream=True)
+        print("AI: ", end='', flush=True)
+        for chunk in response:
+            print(chunk['response'], end='', flush=True)
+        print("\n")
 
 if __name__ == "__main__":
     chat()

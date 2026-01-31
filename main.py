@@ -13,46 +13,57 @@ def buscar_en_youtube(busqueda):
     except: return None, None
 
 def chat():
-    print("\n🚀 ASISTENTE TOTAL (v3 - Modo Forzado)")
-    print("---------------------------------------")
+    print("\n🚀 ASISTENTE MULTIMEDIA")
+    print("-----------------------")
+    print("Pistas:")
+    print("• Menciona un archivo .txt para leerlo.")
+    print("• Menciona 'youtube' para buscar videos.")
+    print("• Ctrl+C detiene la respuesta o cierra el chat.")
     
     while True:
-        msg = input("\nTú: ")
-        if msg.lower() in ['salir', 'exit']: break
+        try:
+            msg = input("\nTú: ")
+        except KeyboardInterrupt:
+            print("\nSaliendo...")
+            break
+
+        if msg.lower() in ['salir', 'exit', 'chau']: break
         
         prompt_final = msg
-        contexto_sistema = "Eres un asistente de IA que tiene acceso a los archivos del usuario porque el sistema te los proporciona directamente."
+        contexto_sistema = "Eres un asistente de terminal Linux. Sé muy breve y directo."
 
-        # --- DETECTAR ARCHIVOS .TXT ---
+        # Detección de archivos .txt
         for palabra in msg.split():
-            if palabra.endswith(".txt") and os.path.exists(palabra):
+            if palabra.lower().endswith(".txt") and os.path.exists(palabra):
                 with open(palabra, 'r', encoding='utf-8') as f:
                     contenido = f.read()
                 print(f"📖 Leyendo {palabra}...")
-                # Aquí forzamos a la IA a aceptar el contenido
-                prompt_final = f"SISTEMA: El contenido del archivo '{palabra}' es el siguiente:\n\n{contenido}\n\nUSUARIO PREGUNTA: {msg}"
+                prompt_final = f"ARCHIVO '{palabra}':\n{contenido}\n\nPREGUNTA: {msg}"
                 break
 
-        # --- DETECTAR YOUTUBE ---
+        # Detección de Youtube
         if "youtube" in msg.lower():
             termino = msg.lower().replace("busca en youtube", "").replace("youtube", "").strip()
             print(f"🔍 Buscando '{termino}'...")
             titulo, url = buscar_en_youtube(termino)
             if url:
                 webbrowser.open(url)
-                prompt_final = f"SISTEMA: Se abrió el video '{titulo}' en el navegador. Confírmale al usuario."
+                prompt_final = f"SISTEMA: Video '{titulo}' abierto. Confirma brevemente."
 
         try:
-            # Usamos 'system' para decirle quién es y qué puede hacer
             response = ollama.chat(model='llama3', messages=[
                 {'role': 'system', 'content': contexto_sistema},
                 {'role': 'user', 'content': prompt_final},
             ], stream=True)
             
             print("AI: ", end='', flush=True)
-            for chunk in response:
-                print(chunk['message']['content'], end='', flush=True)
+            try:
+                for chunk in response:
+                    print(chunk['message']['content'], end='', flush=True)
+            except KeyboardInterrupt:
+                print("\n[Interrumpido]")
             print()
+            
         except Exception as e:
             print(f"\n❌ Error: {e}")
 
